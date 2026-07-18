@@ -1,7 +1,8 @@
 import path from "path";
-import { comparePassword, createUser, getUserByEmail, hashPassword } from "../services/auth.services.js";
+import { comparePassword, createUser, generateToken, getUserByEmail, hashPassword } from "../services/auth.services.js";
 
 export const getRegisterPage = (req, res) => {
+  if(res.user) res.redirect("/");
   return res.render("auth/register", {
     errors: [],
     user: null,
@@ -9,16 +10,17 @@ export const getRegisterPage = (req, res) => {
 };
 
 export const postRegister = async (req, res) => {
+  if(res.user) res.redirect("/");
   console.log(req.body);
   const {name, email, password} = req.body;
 
   const userExists = await getUserByEmail(email);
 
-  console.log("user already exists bruhh plzz change your email",userExists)
+  if(userExists) console.log("user already exists bruhh plzz change your email",userExists)
 
   if(userExists) return res.redirect("/register");
 
-  const hashedPassword = await hashPassword(password)
+  const hashedPassword = await hashPassword(password);
   const [user] = await createUser({name, email, hashedPassword});
   console.log(user);
 
@@ -26,6 +28,7 @@ export const postRegister = async (req, res) => {
 }
 
 export const getLoginPage = (req, res) => {
+  if(res.user) res.redirect("/");
   return res.render("auth/login", {
     errors: [],
     user: null,
@@ -33,6 +36,7 @@ export const getLoginPage = (req, res) => {
 };
 
 export const postLogin = async (req, res) => {
+  if(res.user) res.redirect("/");
   const { email, password} = req.body;
 
   const user = await getUserByEmail(email);
@@ -44,6 +48,24 @@ export const postLogin = async (req, res) => {
 
   if(!isPasswordValid) return res.redirect("/login");
 
-  res.setHeader("Set-Cookie", "isLoggedIn=true; path=/;");
+  const token = generateToken({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+  });
+  res.cookie("access_token", token);
+
+  // res.setHeader("Set-Cookie", "isLoggedIn=true; path=/;");
   res.redirect("/");
 };
+
+export const getMe = (req, res) => {
+  if(!req.user) return res.send("Not logged in bruhh");
+
+  return res.send(`<h1>Hey ${req.user.name} your mail is:${req.user.email} </h1>`);
+}
+
+export const logoutUser = (req, res) => {
+  res.clearCookie("access_token");
+  res.redirect("/login");
+}
