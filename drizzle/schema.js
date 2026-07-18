@@ -1,9 +1,13 @@
 
+import { relations } from "drizzle-orm";
 import { int, mysqlTable, varchar, timestamp } from "drizzle-orm/mysql-core";
 export const shortLinksTable = mysqlTable("short_link", {
   id: int().autoincrement().primaryKey(),
   url: varchar({ length: 255 }).notNull(),
   shortCode: varchar("short_code", { length: 20 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  userId: int("user_id").notNull().references(() => usersTable.id),
 });
 
 export const usersTable = mysqlTable("users", {
@@ -14,3 +18,14 @@ export const usersTable = mysqlTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
+
+export const usersRelation = relations(usersTable, ({ many }) => ({
+  shortLinks: many(shortLinksTable),
+}));
+
+export const shortLinksRelation = relations(shortLinksTable, ({ one }) => ({
+  user: one(usersTable, {
+    fields: [shortLinksTable.userId],
+    references: [usersTable.id],
+  }),
+}));

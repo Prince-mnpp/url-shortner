@@ -3,6 +3,8 @@ import cookieParser from "cookie-parser";
 import { shortenerRoutes } from "./routes/shortener.routes.js";
 import { authRoutes } from "./routes/auth.routes.js";
 import { verifyAuthentication } from "./middlewares/verify-auth-middleware.js";
+import session from "express-session";
+import flash from "connect-flash";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +19,10 @@ app.set("view engine", "ejs");
 //     res.locals.user = req.user || null;
 //     next();
 // });
+app.use(session({
+  secret: "my-secret", resave:true, saveUninitialized: false
+}));
+app.use(flash());
 
 app.use(verifyAuthentication);
 

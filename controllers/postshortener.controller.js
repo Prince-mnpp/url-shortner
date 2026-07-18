@@ -9,7 +9,8 @@ export const getShortenerPage = async (req, res) => {
   try {
     // const file = await readFile(path.join("views", "index.html"));
     // const links = await loadLinks();
-    const links = await getAllShortLinks();
+    if(!req.user) return res.redirect("/login");
+    const links = await getAllShortLinks({userId: req.user.id});
 
     // let isLoggedIn = req.headers.cookie;
     // isLoggedIn = isLoggedIn
@@ -29,6 +30,7 @@ export const getShortenerPage = async (req, res) => {
 };
 
 export const postURLShortener = async (req, res) => {
+  if(!req.user) return res.redirect("/login");
   try {
     const { url, shortCode } = req.body;
     const finalShortCode = shortCode || crypto.randomBytes(4).toString("hex");
@@ -44,7 +46,7 @@ export const postURLShortener = async (req, res) => {
 
     // links[finalShortCode] = url;
 
-    await insertShortLink({ url, shortCode: finalShortCode });
+    await insertShortLink({ url, shortCode: finalShortCode, userId: req.user.id});
     return res.redirect("/");
   } catch (error) {
     console.error(error);
