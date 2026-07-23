@@ -1,6 +1,6 @@
 
 import { relations } from "drizzle-orm";
-import { int, mysqlTable, varchar, timestamp } from "drizzle-orm/mysql-core";
+import { int, mysqlTable, varchar, timestamp, boolean, text } from "drizzle-orm/mysql-core";
 export const shortLinksTable = mysqlTable("short_link", {
   id: int().autoincrement().primaryKey(),
   url: varchar({ length: 255 }).notNull(),
@@ -8,6 +8,18 @@ export const shortLinksTable = mysqlTable("short_link", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
   userId: int("user_id").notNull().references(() => usersTable.id),
+});
+
+export const sessionsTable = mysqlTable("sessions", {
+  id: int().autoincrement().primaryKey(),
+  userId: int("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  valid: boolean().default(true).notNull(),
+  userAgent: text("user_agent"),
+  ip: varchar({ length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 
 export const usersTable = mysqlTable("users", {
@@ -21,6 +33,7 @@ export const usersTable = mysqlTable("users", {
 
 export const usersRelation = relations(usersTable, ({ many }) => ({
   shortLinks: many(shortLinksTable),
+  sessions: many(sessionsTable),
 }));
 
 export const shortLinksRelation = relations(shortLinksTable, ({ one }) => ({
@@ -29,3 +42,10 @@ export const shortLinksRelation = relations(shortLinksTable, ({ one }) => ({
     references: [usersTable.id],
   }),
 }));
+
+export const sessionsRelation = relations(sessionsTable, ({one}) => ({
+  user: one(usersTable, {
+    fields: [sessionsTable.userId],
+    references: [usersTable.id],
+  })
+}))

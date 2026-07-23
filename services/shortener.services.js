@@ -17,3 +17,16 @@ export const getShortLinkByShortCode = async (shortCode) => {
 export const insertShortLink = async ({ url, shortCode, userId }) => {
   await db.insert(shortLinksTable).values({ url, shortCode, userId});
 };
+
+export const findShortLinkById = async(id) => {
+  const [res] = await db.select().from(shortLinksTable).where(eq(shortLinksTable.id, id));
+  return res;
+};
+
+export const updateShortCode = async({id, url, shortCode}) => {
+  return await db.update(shortLinksTable).set({url, shortCode}).where(eq(shortLinksTable.id,id))
+};
+
+export const deleteShortCodeById = async({id}) => {
+  return await db.delete(shortLinksTable).where(eq(shortLinksTable.id,id));
+};
